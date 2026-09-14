@@ -171,9 +171,8 @@ if(orderFormV7){
     }
 
     // WhatsApp del negocio. Puedes cambiarlo en CONFIG al principio del archivo.
-    const whatsappUrl=`https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(text)}`;
-    setTimeout(()=>window.open(whatsappUrl,'_blank','noopener,noreferrer'),250);
-
+    const whatsappUrl = `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(text)}`;
+window.location.href = whatsappUrl;
     if(status && !sheetSaved && GOOGLE_SHEETS_URL.trim()){
       status.innerHTML='✓ <b>WhatsApp preparado.</b> Revisa que hayas configurado la URL de Google Sheets.';
     }
