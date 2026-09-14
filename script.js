@@ -160,34 +160,36 @@ if(orderFormV7){
     orderFormV7.classList.add('order-complete');
     setTimeout(()=>orderFormV7.classList.remove('order-complete'),900);
 
-    // Guarda el pedido en Google Sheets mediante Google Apps Script.
+        // Guarda el pedido en Google Sheets en segundo plano
     const order = {
-  brand: 'Tropical Mousse',
-  fecha,
-  nombre: name,
-  cantidad: q,
-  entrega: d,
-  telefono: number,
-  nota: extra
-};
+      brand: 'Tropical Mousse',
+      fecha,
+      nombre: name,
+      cantidad: q,
+      entrega: d,
+      telefono: number,
+      nota: extra
+    };
 
-if (typeof GOOGLE_SHEETS_URL === 'string' && GOOGLE_SHEETS_URL.trim()) {
-  fetch(GOOGLE_SHEETS_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8'
-    },
-    body: JSON.stringify(order),
-    keepalive: true
-  }).catch(err => {
-    console.warn('No se pudo enviar a Google Sheets:', err);
+    if (typeof GOOGLE_SHEETS_URL === 'string' && GOOGLE_SHEETS_URL.trim()) {
+      fetch(GOOGLE_SHEETS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify(order),
+        keepalive: true
+      }).catch(err => {
+        console.warn('No se pudo enviar a Google Sheets:', err);
+      });
+    }
+
+    // Abrir WhatsApp inmediatamente
+    const whatsappUrl = `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(text)}`;
+    window.location.href = whatsappUrl;
   });
 }
-
-    // WhatsApp del negocio. Puedes cambiarlo en CONFIG al principio del archivo.
-    const whatsappUrl = `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(text)}`;
-window.location.assign(whatsappUrl);
 
 
 // V7 — detalle: parallax cinematográfico suave sin el tilt brusco
