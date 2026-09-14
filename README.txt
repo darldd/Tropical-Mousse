@@ -1,12 +1,25 @@
-CHINOLA — Mousse Tropical / V3
+TROPICAL MOUSSE V15
+====================
 
-Abre index.html en Chrome o Edge.
+Incluye:
+- index.html
+- style.css
+- script.js
+- google-apps-script.gs
 
-V3 incluye:
-- Detalle con fotografía independiente, sin video.
-- Tres imágenes distintas en Esencia, con fallback automático si una fuente externa falla.
-- Nueva fotografía para “Suave hasta la última cucharada”.
-- Video en Textura con control de cámara lenta 0.55x.
-- Animaciones, navegación, tilt, efectos de cursor y contadores.
+FUNCIONAMIENTO DEL PEDIDO
+1. El cliente llena el formulario.
+2. El pedido se envía a Google Sheets cuando GOOGLE_SHEETS_URL está configurada.
+3. Se abre WhatsApp del negocio con el pedido completo.
+4. El negocio recibe el mensaje en WhatsApp y ve el pedido en la hoja.
 
-Nota: las fotografías externas necesitan conexión a Internet para cargar.
+WHATSAPP
+Número configurado: 849 440 4797
+Si quieres usar el otro número, cambia BUSINESS_WHATSAPP en script.js.
+
+GOOGLE SHEETS
+Sigue los pasos comentados dentro de google-apps-script.gs.
+Después pega la URL /exec en GOOGLE_SHEETS_URL al inicio de script.js.
+
+IMPORTANTE
+GitHub Pages no puede escribir directamente en un Excel local. Google Sheets + Apps Script funciona como el puente gratuito para guardar los pedidos.

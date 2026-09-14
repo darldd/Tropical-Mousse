@@ -1,3 +1,9 @@
+// CONFIGURACIÓN DE TROPICAL MOUSSE
+// 1) Pon aquí la URL /exec de tu Google Apps Script.
+// 2) El WhatsApp que recibirá los pedidos es 8494404797.
+const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbznexubCsStIZKs-SEzJrpc1R3s6KNTM8tZXTgWCdvI8vZcc_4Nk2h7bJNoErTvHqCm8A/exec';
+const BUSINESS_WHATSAPP = '18494404797';
+
 const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 window.addEventListener('load',()=>setTimeout(()=>$('#loader').classList.add('hide'),700));
 const nav=$('#nav'),progress=$('#scrollProgress'),glow=$('#cursorGlow');
@@ -44,9 +50,9 @@ const teamSelected=$('#teamSelected');
 const teamMessage=$('#teamMessage');
 const teamMessages={
   Darling:'Parte de la idea que convierte la chinola en una experiencia.',
-  Jordany:'Creatividad y energía detrás de cada detalle de Tropical Mousse.',
+  Jordany:'Creatividad y energía detrás de cada detalle de TROPICAL MOUSSE.',
   Abdiel:'Una pieza clave para darle forma y personalidad al proyecto.',
-  Richard:'Organización, visión y ganas de llevar Tropical Mousse más lejos.'
+  Richard:'Organización, visión y ganas de llevar TROPICAL MOUSSE más lejos.'
 };
 if(teamPanel){
   teamPanel.addEventListener('pointermove',e=>{const r=teamPanel.getBoundingClientRect();teamPanel.style.setProperty('--team-x',`${((e.clientX-r.left)/r.width)*100}%`);teamPanel.style.setProperty('--team-y',`${((e.clientY-r.top)/r.height)*100}%`)});
@@ -56,7 +62,7 @@ teamMembers.forEach(member=>member.addEventListener('click',()=>{
   teamMembers.forEach(m=>m.classList.remove('active')); member.classList.add('active');
   const person=member.dataset.person;
   [teamSelected,teamMessage].forEach(el=>el&&el.classList.add('team-changing'));
-  setTimeout(()=>{if(teamSelected)teamSelected.textContent=person;if(teamMessage)teamMessage.textContent=teamMessages[person]||'Parte del equipo CHINOLA.';[teamSelected,teamMessage].forEach(el=>el&&el.classList.remove('team-changing'));},120);
+  setTimeout(()=>{if(teamSelected)teamSelected.textContent=person;if(teamMessage)teamMessage.textContent=teamMessages[person]||'Parte del equipo TROPICAL MOUSSE.';[teamSelected,teamMessage].forEach(el=>el&&el.classList.remove('team-changing'));},120);
 }));
 
 // V7 — pedidos: experiencia interactiva + validación numérica
@@ -127,7 +133,7 @@ if(orderFormV7){
   document.querySelectorAll('.qty-quick button').forEach(b=>b.addEventListener('click',()=>{qty.value=b.dataset.qty;updateOrderUI();qty.dispatchEvent(new Event('change',{bubbles:true}));}));
   updateOrderUI();
 
-  orderFormV7.addEventListener('submit',e=>{
+  orderFormV7.addEventListener('submit',async e=>{
     e.preventDefault();
     const name=nameInput.value.trim(), number=phone.value.trim();
     if(!name || !number){
@@ -135,20 +141,45 @@ if(orderFormV7){
       if(status) status.textContent='Completa tu nombre y teléfono para preparar el pedido.';
       return;
     }
+
     const q=qty.value, d=delivery.value, extra=note.value.trim();
-    const text=`PEDIDO CHINOLA\n\nNombre: ${name}\nCantidad: ${q} mousse(s)\nEntrega: ${d}\nTeléfono: ${number}${extra?'\nNota: '+extra:''}`;
+    const now=new Date();
+    const fecha=now.toLocaleString('es-DO',{dateStyle:'short',timeStyle:'short'});
+    const text=`PEDIDO TROPICAL MOUSSE\n\nNombre: ${name}\nCantidad: ${q} mousse(s)\nEntrega: ${d}\nTeléfono: ${number}${extra?'\nNota: '+extra:''}`;
+
     navigator.clipboard?.writeText(text).catch(()=>{});
+
     if(status){
       status.classList.remove('order-success'); void status.offsetWidth; status.classList.add('order-success');
-      status.innerHTML='✓ <b>Pedido preparado.</b> Tus datos fueron copiados y están listos para confirmar con el equipo de CHINOLA.';
+      status.innerHTML='✓ <b>Pedido preparado.</b> Se registrará en la hoja y se abrirá WhatsApp para confirmar.';
     }
     if(btn){
       btn.classList.add('sent');
       btn.querySelector('span').textContent='¡Pedido preparado!';
-      setTimeout(()=>{btn.classList.remove('sent');btn.querySelector('span').textContent='Preparar pedido'},2800);
     }
     orderFormV7.classList.add('order-complete');
     setTimeout(()=>orderFormV7.classList.remove('order-complete'),900);
+
+    // Guarda el pedido en Google Sheets mediante Google Apps Script.
+    const order={brand:'Tropical Mousse',fecha,nombre:name,cantidad:q,entrega:d,telefono:number,nota:extra};
+    let sheetSaved=false;
+    if(typeof GOOGLE_SHEETS_URL==='string' && GOOGLE_SHEETS_URL.trim()){
+      try{
+        await fetch(GOOGLE_SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(order),keepalive:true});
+        sheetSaved=true;
+      }catch(err){ console.warn('No se pudo enviar a Google Sheets:',err); }
+    }
+
+    // WhatsApp del negocio. Puedes cambiarlo en CONFIG al principio del archivo.
+    const whatsappUrl=`https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(text)}`;
+    setTimeout(()=>window.open(whatsappUrl,'_blank','noopener,noreferrer'),250);
+
+    if(status && !sheetSaved && GOOGLE_SHEETS_URL.trim()){
+      status.innerHTML='✓ <b>WhatsApp preparado.</b> Revisa que hayas configurado la URL de Google Sheets.';
+    }
+    setTimeout(()=>{
+      if(btn){btn.classList.remove('sent');btn.querySelector('span').textContent='Preparar pedido';}
+    },2800);
   });
 }
 
