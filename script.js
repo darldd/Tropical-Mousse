@@ -172,16 +172,8 @@ if(orderFormV7){
 
     // WhatsApp del negocio. Puedes cambiarlo en CONFIG al principio del archivo.
     const whatsappUrl = `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(text)}`;
-
 window.location.assign(whatsappUrl);
-    if(status && !sheetSaved && GOOGLE_SHEETS_URL.trim()){
-      status.innerHTML='✓ <b>WhatsApp preparado.</b> Revisa que hayas configurado la URL de Google Sheets.';
-    }
-    setTimeout(()=>{
-      if(btn){btn.classList.remove('sent');btn.querySelector('span').textContent='Preparar pedido';}
-    },2800);
-  });
-}
+
 
 // V7 — detalle: parallax cinematográfico suave sin el tilt brusco
 const detail=document.querySelector('.cinematic-detail');
@@ -332,3 +324,4 @@ if(mobileMode.matches){
     setTimeout(()=>discoverBtn.classList.remove('touching'),220);
   },{passive:true});
 }
+
