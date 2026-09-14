@@ -161,14 +161,29 @@ if(orderFormV7){
     setTimeout(()=>orderFormV7.classList.remove('order-complete'),900);
 
     // Guarda el pedido en Google Sheets mediante Google Apps Script.
-    const order={brand:'Tropical Mousse',fecha,nombre:name,cantidad:q,entrega:d,telefono:number,nota:extra};
-    let sheetSaved=false;
-    if(typeof GOOGLE_SHEETS_URL==='string' && GOOGLE_SHEETS_URL.trim()){
-      try{
-        await fetch(GOOGLE_SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(order),keepalive:true});
-        sheetSaved=true;
-      }catch(err){ console.warn('No se pudo enviar a Google Sheets:',err); }
-    }
+    const order = {
+  brand: 'Tropical Mousse',
+  fecha,
+  nombre: name,
+  cantidad: q,
+  entrega: d,
+  telefono: number,
+  nota: extra
+};
+
+if (typeof GOOGLE_SHEETS_URL === 'string' && GOOGLE_SHEETS_URL.trim()) {
+  fetch(GOOGLE_SHEETS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8'
+    },
+    body: JSON.stringify(order),
+    keepalive: true
+  }).catch(err => {
+    console.warn('No se pudo enviar a Google Sheets:', err);
+  });
+}
 
     // WhatsApp del negocio. Puedes cambiarlo en CONFIG al principio del archivo.
     const whatsappUrl = `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(text)}`;
