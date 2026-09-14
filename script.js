@@ -179,7 +179,7 @@ window.location.assign(whatsappUrl);
     }
     setTimeout(()=>{
       if(btn){btn.classList.remove('sent');btn.querySelector('span').textContent='Preparar pedido';}
-    },2800);
+    },28);
   });
 }
 
