@@ -1,9 +1,3 @@
-// CONFIGURACIÓN DE TROPICAL MOUSSE
-// 1) Pon aquí la URL /exec de tu Google Apps Script.
-// 2) El WhatsApp que recibirá los pedidos es 8494404797.
-const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbznexubCsStIZKs-SEzJrpc1R3s6KNTM8tZXTgWCdvI8vZcc_4Nk2h7bJNoErTvHqCm8A/exec';
-const BUSINESS_WHATSAPP = '18494404797';
-
 const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 window.addEventListener('load',()=>setTimeout(()=>$('#loader').classList.add('hide'),700));
 const nav=$('#nav'),progress=$('#scrollProgress'),glow=$('#cursorGlow');
@@ -50,9 +44,9 @@ const teamSelected=$('#teamSelected');
 const teamMessage=$('#teamMessage');
 const teamMessages={
   Darling:'Parte de la idea que convierte la chinola en una experiencia.',
-  Jordany:'Creatividad y energía detrás de cada detalle de TROPICAL MOUSSE.',
+  Jordany:'Creatividad y energía detrás de cada detalle de CHINOLA.',
   Abdiel:'Una pieza clave para darle forma y personalidad al proyecto.',
-  Richard:'Organización, visión y ganas de llevar TROPICAL MOUSSE más lejos.'
+  Richard:'Organización, visión y ganas de llevar CHINOLA más lejos.'
 };
 if(teamPanel){
   teamPanel.addEventListener('pointermove',e=>{const r=teamPanel.getBoundingClientRect();teamPanel.style.setProperty('--team-x',`${((e.clientX-r.left)/r.width)*100}%`);teamPanel.style.setProperty('--team-y',`${((e.clientY-r.top)/r.height)*100}%`)});
@@ -62,10 +56,10 @@ teamMembers.forEach(member=>member.addEventListener('click',()=>{
   teamMembers.forEach(m=>m.classList.remove('active')); member.classList.add('active');
   const person=member.dataset.person;
   [teamSelected,teamMessage].forEach(el=>el&&el.classList.add('team-changing'));
-  setTimeout(()=>{if(teamSelected)teamSelected.textContent=person;if(teamMessage)teamMessage.textContent=teamMessages[person]||'Parte del equipo TROPICAL MOUSSE.';[teamSelected,teamMessage].forEach(el=>el&&el.classList.remove('team-changing'));},120);
+  setTimeout(()=>{if(teamSelected)teamSelected.textContent=person;if(teamMessage)teamMessage.textContent=teamMessages[person]||'Parte del equipo CHINOLA.';[teamSelected,teamMessage].forEach(el=>el&&el.classList.remove('team-changing'));},120);
 }));
 
-// V7 — pedidos: experiencia interactiva + validación numérica
+// V7/V20.3 — pedidos: selección de sabores + cantidades por mousse
 const orderFormV7=$('#orderForm');
 if(orderFormV7){
   const nameInput=$('#orderName');
@@ -76,46 +70,85 @@ if(orderFormV7){
   const status=$('#formStatus');
   const btn=orderFormV7.querySelector('.order-btn');
   const heading=orderFormV7.querySelector('.form-heading');
+  const flavorOptions=[...orderFormV7.querySelectorAll('.flavor-option')];
+  const flavorSelectionText=$('#flavorSelectionText');
+  const flavorTotal=$('#flavorTotal');
+  const orderPrice=$('#orderPrice');
 
-  // Indicador de progreso
   if(heading){
     heading.insertAdjacentHTML('beforeend','<div class="form-step"><span class="active"></span><span></span><span></span><span></span></div>');
   }
 
-  // Cantidad rápida
-  const qtyWrap=qty?.parentElement;
-  if(qtyWrap && !qtyWrap.querySelector('.qty-quick')){
-    qtyWrap.insertAdjacentHTML('beforeend',`<div class="qty-quick" aria-label="Cantidad rápida">
-      <button type="button" data-qty="1">1</button><button type="button" data-qty="2">2</button><button type="button" data-qty="3">3</button><button type="button" data-qty="4">4</button><button type="button" data-qty="5">5</button>
-    </div>`);
-  }
+  // Estado de cada sabor. El cliente puede combinar los tres.
+  const flavorState={Chinola:{qty:0,size:'small'},Coco:{qty:0,size:'small'},'Café':{qty:0,size:'small'}};
 
-  const summary=document.createElement('div');
-  summary.className='order-summary';
-  summary.innerHTML='<div><small>RESUMEN</small><span id="orderSummaryText">Completa tus datos para ver el resumen.</span></div><strong id="orderSummaryQty">1 mousse</strong>';
-  orderFormV7.querySelector('.order-btn').insertAdjacentElement('beforebegin',summary);
+  const getFlavorSummary=()=>Object.entries(flavorState).filter(([,item])=>item.qty>0);
+  const getTotal=()=>Object.values(flavorState).reduce((sum,item)=>sum+item.qty,0);
+  const getPrice=()=>flavorOptions.reduce((sum,card)=>{ const flavor=card.dataset.flavor; const item=flavorState[flavor]; const price=Number(card.dataset[item.size==='large'?'large':'small'])||0; return sum+(item.qty||0)*price; },0);
+  const money=value=>`RD$${value.toLocaleString('es-DO')}`;
 
+  const updateFlavors=()=>{
+    const selected=getFlavorSummary();
+    const total=getTotal();
+    const price=getPrice();
+    qty.value=total;
+    flavorOptions.forEach(card=>{
+      const flavor=card.dataset.flavor;
+      const item=flavorState[flavor];
+      const count=item.qty||0;
+      const countEl=card.querySelector('[data-count]');
+      if(countEl) countEl.textContent=count;
+      card.classList.toggle('selected',count>0);
+    });
+    flavorSelectionText.textContent=selected.length
+      ? selected.map(([flavor,item])=>`${flavor} × ${item.qty} (${item.size==='large'?'Grande':'Pequeño'})`).join(' · ')
+      : 'Ningún sabor seleccionado';
+    flavorTotal.textContent=`${total} mousse${total===1?'':'s'} · ${money(price)}`;
+    if(orderPrice) orderPrice.textContent=money(price);
+    updateProgress();
+  };
+
+  // Indicador de progreso
   const steps=[...orderFormV7.querySelectorAll('.form-step span')];
   const updateProgress=()=>{
-    const done=[nameInput?.value.trim(),qty?.value,delivery?.value,phone?.value.trim()].filter(Boolean).length;
+    const done=[nameInput?.value.trim(),getTotal()>0,delivery?.value,phone?.value.trim()].filter(Boolean).length;
     steps.forEach((dot,i)=>dot.classList.toggle('active',i<Math.max(1,Math.min(done,steps.length))));
   };
 
+  flavorOptions.forEach(card=>{
+    const flavor=card.dataset.flavor;
+    card.addEventListener('click',e=>{
+      if(e.target.closest('.flavor-minus')||e.target.closest('.flavor-plus')) return;
+      flavorState[flavor].qty=flavorState[flavor].qty>0?0:1;
+      updateFlavors();
+    });
+    card.querySelector('.flavor-plus')?.addEventListener('click',()=>{
+      flavorState[flavor].qty+=1;
+      updateFlavors();
+    });
+    card.querySelector('.flavor-minus')?.addEventListener('click',()=>{
+      flavorState[flavor].qty=Math.max(0,flavorState[flavor].qty-1);
+      updateFlavors();
+    });
+    card.querySelectorAll('.size-btn').forEach(sizeBtn=>sizeBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      flavorState[flavor].size=sizeBtn.dataset.size;
+      card.querySelectorAll('.size-btn').forEach(b=>b.classList.toggle('active',b===sizeBtn));
+      updateFlavors();
+    }));
+  });
+
   const updateOrderUI=()=>{
-    const name=nameInput?.value.trim()||'Tu pedido';
-    const q=qty?.value||'1';
-    const d=delivery?.value||'Recoger en CEGES Lucerna';
-    $('#orderSummaryText').textContent=`${name} · ${d}`;
-    $('#orderSummaryQty').textContent=`${q} mousse${q==='1'?'':'s'}`;
-    updateProgress();
-    document.querySelectorAll('.qty-quick button').forEach(b=>b.classList.toggle('active',b.dataset.qty===q));
+    updateFlavors();
+    orderFormV7.classList.add('is-focused');
+    clearTimeout(orderFormV7._focusTimer);
+    orderFormV7._focusTimer=setTimeout(()=>orderFormV7.classList.remove('is-focused'),240);
   };
 
-  // Solo números: bloquea letras, símbolos y pegados no numéricos.
   phone?.addEventListener('input',()=>{
     const clean=phone.value.replace(/\D/g,'').slice(0,15);
     if(phone.value!==clean) phone.value=clean;
-    updateOrderUI();
+    updateProgress();
   });
   phone?.addEventListener('keydown',e=>{
     const allowed=['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
@@ -125,61 +158,37 @@ if(orderFormV7){
     e.preventDefault();
     const text=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,15);
     phone.setRangeText(text,phone.selectionStart,phone.selectionEnd,'end');
-    updateOrderUI();
+    updateProgress();
   });
 
-  [nameInput,qty,delivery,note].forEach(field=>field?.addEventListener('input',()=>{updateOrderUI();orderFormV7.classList.add('is-focused');clearTimeout(orderFormV7._focusTimer);orderFormV7._focusTimer=setTimeout(()=>orderFormV7.classList.remove('is-focused'),240);}));
-  qty?.addEventListener('change',updateOrderUI);
-  document.querySelectorAll('.qty-quick button').forEach(b=>b.addEventListener('click',()=>{qty.value=b.dataset.qty;updateOrderUI();qty.dispatchEvent(new Event('change',{bubbles:true}));}));
-  updateOrderUI();
+  [nameInput,delivery,note].forEach(field=>field?.addEventListener('input',updateOrderUI));
+  delivery?.addEventListener('change',updateOrderUI);
+  updateFlavors();
 
-  orderFormV7.addEventListener('submit',async e=>{
+  orderFormV7.addEventListener('submit',e=>{
     e.preventDefault();
-    const name=nameInput.value.trim(), number=phone.value.trim();
-    if(!name || !number){
+    const name=nameInput.value.trim(), number=phone.value.trim(), total=getTotal(), price=getPrice();
+    const selected=getFlavorSummary();
+    if(!name || !number || !total){
       orderFormV7.classList.remove('shake'); void orderFormV7.offsetWidth; orderFormV7.classList.add('shake');
-      if(status) status.textContent='Completa tu nombre y teléfono para preparar el pedido.';
+      if(status) status.textContent=!total?'Elige al menos un sabor para preparar tu pedido.':'Completa tu nombre y teléfono para preparar el pedido.';
       return;
     }
-
-    const q=qty.value, d=delivery.value, extra=note.value.trim();
-    const now=new Date();
-    const fecha=now.toLocaleString('es-DO',{dateStyle:'short',timeStyle:'short'});
-    const text=`PEDIDO TROPICAL MOUSSE\n\nNombre: ${name}\nCantidad: ${q} mousse(s)\nEntrega: ${d}\nTeléfono: ${number}${extra?'\nNota: '+extra:''}`;
-
+    const d=delivery.value, extra=note.value.trim();
+    const flavorLines=selected.map(([flavor,item])=>`- ${flavor}: ${item.qty} × ${item.size==='large'?'Grande':'Pequeño'}`).join('\n');
+    const text=`PEDIDO TROPICAL MOUSSE\n\nNombre: ${name}\nSabores:\n${flavorLines}\nCantidad total: ${total} mousse(s)\nEntrega: ${d}\nTeléfono: ${number}${extra?'\nNota: '+extra:''}`;
     navigator.clipboard?.writeText(text).catch(()=>{});
-
     if(status){
       status.classList.remove('order-success'); void status.offsetWidth; status.classList.add('order-success');
-      status.innerHTML='✓ <b>Pedido preparado.</b> Se registrará en la hoja y se abrirá WhatsApp para confirmar.';
+      status.innerHTML='✓ <b>Pedido preparado.</b> Tus sabores y cantidades fueron copiados y están listos para confirmar.';
     }
     if(btn){
       btn.classList.add('sent');
       btn.querySelector('span').textContent='¡Pedido preparado!';
+      setTimeout(()=>{btn.classList.remove('sent');btn.querySelector('span').textContent='Preparar pedido'},2800);
     }
     orderFormV7.classList.add('order-complete');
     setTimeout(()=>orderFormV7.classList.remove('order-complete'),900);
-
-    // Guarda el pedido en Google Sheets mediante Google Apps Script.
-    const order={brand:'Tropical Mousse',fecha,nombre:name,cantidad:q,entrega:d,telefono:number,nota:extra};
-    let sheetSaved=false;
-    if(typeof GOOGLE_SHEETS_URL==='string' && GOOGLE_SHEETS_URL.trim()){
-      try{
-        await fetch(GOOGLE_SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(order),keepalive:true});
-        sheetSaved=true;
-      }catch(err){ console.warn('No se pudo enviar a Google Sheets:',err); }
-    }
-
-    // WhatsApp del negocio. Puedes cambiarlo en CONFIG al principio del archivo.
-    const whatsappUrl = `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(text)}`;
-
-window.location.assign(whatsappUrl);
-    if(status && !sheetSaved && GOOGLE_SHEETS_URL.trim()){
-      status.innerHTML='✓ <b>WhatsApp preparado.</b> Revisa que hayas configurado la URL de Google Sheets.';
-    }
-    setTimeout(()=>{
-      if(btn){btn.classList.remove('sent');btn.querySelector('span').textContent='Preparar pedido';}
-    },28);
   });
 }
 
@@ -332,3 +341,87 @@ if(mobileMode.matches){
     setTimeout(()=>discoverBtn.classList.remove('touching'),220);
   },{passive:true});
 }
+
+
+/* V20.6 — carrito de compra desde Tres perfiles */
+document.addEventListener('DOMContentLoaded',()=>{
+  const cards=[...document.querySelectorAll('.flavor-card[data-product]')];
+  const cartFloat=document.querySelector('#cartFloat');
+  const cartToggle=document.querySelector('#cartToggle');
+  const cartClose=document.querySelector('#cartClose');
+  const cartPanel=document.querySelector('#cartPanel');
+  const cartItems=document.querySelector('#cartItems');
+  const cartBadge=document.querySelector('#cartBadge');
+  const cartTotalText=document.querySelector('#cartTotalText');
+  const cartGrandTotal=document.querySelector('#cartGrandTotal');
+  const cartBuy=document.querySelector('#cartBuy');
+  if(!cards.length||!cartFloat)return;
+
+  const cart={};
+  const money=n=>`RD$${n.toLocaleString('es-DO')}`;
+
+  cards.forEach(card=>{
+    const flavor=card.dataset.product;
+    cart[flavor]={qty:0,size:'small',small:Number(card.dataset.small),large:Number(card.dataset.large),image:card.dataset.image};
+    const sizeButtons=card.querySelectorAll('.product-size-btn');
+    sizeButtons.forEach(btn=>btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      cart[flavor].size=btn.dataset.size;
+      sizeButtons.forEach(b=>b.classList.toggle('active',b===btn));
+      renderCart();
+    }));
+    card.querySelector('[data-plus]')?.addEventListener('click',e=>{e.stopPropagation();cart[flavor].qty++;renderCart(true)});
+    card.querySelector('[data-minus]')?.addEventListener('click',e=>{e.stopPropagation();cart[flavor].qty=Math.max(0,cart[flavor].qty-1);renderCart()});
+  });
+
+  function getTotalQty(){return Object.values(cart).reduce((n,p)=>n+p.qty,0)}
+  function getTotalPrice(){return Object.values(cart).reduce((n,p)=>n+p.qty*(p.size==='large'?p.large:p.small),0)}
+
+  function renderCart(pop=false){
+    let totalQty=getTotalQty(), totalPrice=getTotalPrice();
+    cartBadge.textContent=totalQty;
+    cartTotalText.textContent=`${totalQty} mousse${totalQty===1?'':'s'} · ${money(totalPrice)}`;
+    cartGrandTotal.textContent=money(totalPrice);
+    cartBuy.disabled=totalQty===0;
+    cards.forEach(card=>{
+      const p=cart[card.dataset.product];
+      const count=card.querySelector('[data-product-count]');
+      if(count)count.textContent=p.qty;
+      card.classList.toggle('is-in-cart',p.qty>0);
+      const label=card.querySelector('.product-selected-label');
+      if(label)label.textContent=p.qty?`${p.qty} agregado${p.qty===1?'':'s'} · ${p.size==='large'?'Grande':'Pequeño'}`:'Agregar al carrito';
+    });
+    const entries=Object.entries(cart).filter(([,p])=>p.qty>0);
+    if(!entries.length){cartItems.innerHTML='<div class="cart-empty">Todavía no has agregado ningún mousse.</div>';return}
+    cartItems.innerHTML=entries.map(([flavor,p])=>{
+      const size=p.size==='large'?'Grande':'Pequeño';
+      const unit=p.size==='large'?p.large:p.small;
+      return `<div class="cart-item"><img src="${p.image}" alt="Mousse de ${flavor}"><div class="cart-item-info"><strong>${flavor}</strong><span>${size} · ${money(unit)} c/u</span><div class="cart-item-controls"><button type="button" data-cart-minus="${flavor}">−</button><b>${p.qty}</b><button type="button" data-cart-plus="${flavor}">+</button></div></div><div class="cart-item-price">${money(unit*p.qty)}</div></div>`;
+    }).join('');
+    cartItems.querySelectorAll('[data-cart-plus]').forEach(btn=>btn.addEventListener('click',()=>{cart[btn.dataset.cartPlus].qty++;renderCart(true)}));
+    cartItems.querySelectorAll('[data-cart-minus]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.cartMinus;cart[key].qty=Math.max(0,cart[key].qty-1);renderCart()}));
+    if(pop){cartToggle.classList.remove('cart-pop');void cartToggle.offsetWidth;cartToggle.classList.add('cart-pop')}
+  }
+
+  function toggleCart(open){
+    cartFloat.classList.toggle('open',open);
+    cartPanel.setAttribute('aria-hidden',String(!open));
+  }
+  cartToggle.addEventListener('click',()=>toggleCart(!cartFloat.classList.contains('open')));
+  cartClose.addEventListener('click',()=>toggleCart(false));
+  document.addEventListener('click',e=>{if(cartFloat.classList.contains('open')&&!cartFloat.contains(e.target))toggleCart(false)});
+
+  cartBuy.addEventListener('click',()=>{
+    const entries=Object.entries(cart).filter(([,p])=>p.qty>0);
+    if(!entries.length)return;
+    const lines=entries.map(([flavor,p])=>{
+      const size=p.size==='large'?'Grande':'Pequeño';
+      const unit=p.size==='large'?p.large:p.small;
+      return `• ${flavor} — ${p.qty} vaso${p.qty===1?'':'s'} ${size} (${money(unit)} c/u) = ${money(unit*p.qty)}`;
+    }).join('\n');
+    const total=`${money(getTotalPrice())}`;
+    const message=`Hola, quiero hacer un pedido de TROPICAL MOUSSE 🍮\n\n${lines}\n\nTotal: ${total}\n\n¿Podemos coordinar mi pedido?`;
+    window.open(`https://wa.me/18494404797?text=${encodeURIComponent(message)}`,'_blank','noopener');
+  });
+  renderCart();
+});
